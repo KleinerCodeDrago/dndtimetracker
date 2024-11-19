@@ -42,6 +42,8 @@
     <button onclick="addPlayer()">Add Player</button>
     <button onclick="resetSession()">Reset Session</button>
     <button onclick="togglePause()">Pause</button>
+    <button onclick="exportPlayers()">Export Players</button>
+    <button onclick="importPlayers()">Import Players</button>
 
     <script>
         let players = [
@@ -130,6 +132,35 @@
             });
             activePlayer = null;
             renderPlayers();
+        }
+
+        function exportPlayers() {
+            const dataStr = JSON.stringify(players);
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+
+            const exportFileDefaultName = 'players.json';
+
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+
+        function importPlayers() {
+            const inputElement = document.createElement('input');
+            inputElement.type = 'file';
+            inputElement.accept = 'application/json';
+            inputElement.onchange = event => {
+                const file = event.target.files[0];
+                const reader = new FileReader();
+                reader.onload = e => {
+                    players = JSON.parse(e.target.result);
+                    activePlayer = null;
+                    renderPlayers();
+                };
+                reader.readAsText(file);
+            };
+            inputElement.click();
         }
 
         document.addEventListener("DOMContentLoaded", () => {
