@@ -52,17 +52,22 @@
         <button onclick="importPlayers()">Import Players</button>
 
         <script>
-        let players = [
+        let players = JSON.parse(localStorage.getItem('players')) || [
             { name: "Sora", waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null },
             { name: "Harpy", waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null },
             { name: "Miner", waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null },
             { name: "Meister", waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null }
         ];
-        let activePlayer = null;
+        let activePlayer = JSON.parse(localStorage.getItem('activePlayer'));
         let isPaused = false;
         let intervalId;
         const maxCurrentActiveTime = 2000;
         const maxWaitTime = maxCurrentActiveTime * players.length;
+
+        function saveData() {
+            localStorage.setItem('players', JSON.stringify(players));
+            localStorage.setItem('activePlayer', JSON.stringify(activePlayer));
+        }
 
         function selectPlayer(index) {
             const now = Date.now();
@@ -74,6 +79,7 @@
             activePlayer = index;
             players[activePlayer].startTime = now;
             players[activePlayer].waitTime = 0; // Reset wait time
+            saveData();
             updatePlayerStyles();
         }
 
@@ -136,6 +142,7 @@
                 }
                 updatePlayerTimers(index);
             });
+            saveData();
         }
 
         function updatePlayerTimers(index) {
@@ -187,6 +194,7 @@
             const playerName = prompt("Enter player name:");
             if (playerName) {
                 players.push({ name: playerName, waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null });
+                saveData();
                 renderPlayers();
             }
         }
@@ -199,6 +207,7 @@
                 player.startTime = null;
             });
             activePlayer = null;
+            saveData();
             renderPlayers();
         }
 
@@ -224,6 +233,7 @@
                 reader.onload = e => {
                     players = JSON.parse(e.target.result);
                     activePlayer = null;
+                    saveData();
                     renderPlayers();
                 };
                 reader.readAsText(file);
