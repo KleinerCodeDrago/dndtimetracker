@@ -109,9 +109,9 @@
                 playerDiv.innerHTML = `
                     <h3>${player.name}</h3>
                     <div class="timers">
-                        <div class="timer ${player.waitTime > maxWaitTime ? 'warning' : ''}">Wait Time: ${formatTime(player.waitTime)}</div>
+                        <div class="timer ${player.waitTime > maxWaitTime ? 'warning' : player.waitTime >= maxWaitTime / 2 ? 'half-warning' : ''}">Wait Time: ${formatTime(player.waitTime)}</div>
                         <div class="timer">Combined Active Time: ${formatTime(player.activeTime)}</div>
-                        <div class="timer ${activePlayer === index && currentActiveTime > maxCurrentActiveTime ? 'warning' : ''}">Current Active Time: ${formatTime(currentActiveTime)}</div>
+                        <div class="timer ${activePlayer === index && currentActiveTime > maxCurrentActiveTime ? 'warning' : currentActiveTime >= maxCurrentActiveTime / 2 ? 'half-warning' : ''}">Current Active Time: ${formatTime(currentActiveTime)}</div>
                     </div>
                     <button onclick="selectPlayer(${index})">Select</button>
                 `;
@@ -152,8 +152,13 @@
 
             if (player.waitTime > maxWaitTime) {
                 waitTimeElement.classList.add('warning');
+                waitTimeElement.classList.remove('half-warning');
+            } else if (player.waitTime >= maxWaitTime / 2) {
+                waitTimeElement.classList.add('half-warning');
+                waitTimeElement.classList.remove('warning');
             } else {
                 waitTimeElement.classList.remove('warning');
+                waitTimeElement.classList.remove('half-warning');
             }
 
             if (currentActiveTime >= maxCurrentActiveTime) {
