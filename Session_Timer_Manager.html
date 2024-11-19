@@ -41,13 +41,18 @@
     <div id="playersContainer"></div>
     <button onclick="addPlayer()">Add Player</button>
     <button onclick="resetSession()">Reset Session</button>
+    <button onclick="togglePause()">Pause</button>
 
     <script>
         let players = [
-            { name: "Player 1", waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null },
-            { name: "Player 2", waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null }
+            { name: "Sora", waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null },
+            { name: "Harpy", waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null },
+            { name: "Miner", waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null },
+            { name: "Meister", waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null }
         ];
         let activePlayer = null;
+        let isPaused = false;
+        let intervalId;
 
         function selectPlayer(index) {
             const now = Date.now();
@@ -87,7 +92,7 @@
             return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
         }
 
-        setInterval(() => {
+        function updateTimers() {
             players.forEach((player, index) => {
                 if (activePlayer !== index) {
                     player.waitTime += 1000;
@@ -96,7 +101,17 @@
                 }
             });
             renderPlayers();
-        }, 1000);
+        }
+
+        function togglePause() {
+            if (isPaused) {
+                intervalId = setInterval(updateTimers, 1000);
+                isPaused = false;
+            } else {
+                clearInterval(intervalId);
+                isPaused = true;
+            }
+        }
 
         function addPlayer() {
             const playerName = prompt("Enter player name:");
@@ -118,6 +133,7 @@
         }
 
         document.addEventListener("DOMContentLoaded", () => {
+            intervalId = setInterval(updateTimers, 1000);
             renderPlayers();
         });
     </script>
