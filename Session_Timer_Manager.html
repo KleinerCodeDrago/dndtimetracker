@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Session Timer Manager</title>
-    <style>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Session Timer Manager</title>
+        <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
@@ -41,17 +41,17 @@
             background-color: #ffffe0; /* Light yellow */
         }
     </style>
-</head>
-<body>
-    <h1>Session Timer Manager</h1>
-    <div id="playersContainer"></div>
-    <button onclick="addPlayer()">Add Player</button>
-    <button onclick="resetSession()">Reset Session</button>
-    <button onclick="togglePause()">Pause</button>
-    <button onclick="exportPlayers()">Export Players</button>
-    <button onclick="importPlayers()">Import Players</button>
+    </head>
+    <body>
+        <h1>Session Timer Manager</h1>
+        <div id="playersContainer"></div>
+        <button onclick="addPlayer()">Add Player</button>
+        <button onclick="resetSession()">Reset Session</button>
+        <button onclick="togglePause()">Pause</button>
+        <button onclick="exportPlayers()">Export Players</button>
+        <button onclick="importPlayers()">Import Players</button>
 
-    <script>
+        <script>
         let players = [
             { name: "Sora", waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null },
             { name: "Harpy", waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null },
@@ -61,8 +61,7 @@
         let activePlayer = null;
         let isPaused = false;
         let intervalId;
-        // const maxCurrentActiveTime = 180000;
-        const maxCurrentActiveTime = 8000;
+        const maxCurrentActiveTime = 2000;
         const maxWaitTime = maxCurrentActiveTime * players.length;
 
         function selectPlayer(index) {
@@ -84,26 +83,20 @@
                 const currentActiveTime = activePlayer === index && player.startTime ? Date.now() - player.startTime : player.currentActiveTime;
                 const currentActiveTimeElement = playerElement.querySelector('.timer:nth-child(3)');
                 
-                console.log(`Player: ${player.name}, Current Active Time: ${currentActiveTime}`);
-                
                 if (currentActiveTime >= maxCurrentActiveTime) {
-                    console.log(`Player: ${player.name} - Adding warning class`);
                     currentActiveTimeElement.classList.add('warning');
                     currentActiveTimeElement.classList.remove('half-warning');
                 } else if (currentActiveTime >= maxCurrentActiveTime / 2) {
-                    console.log(`Player: ${player.name} - Adding half-warning class`);
                     currentActiveTimeElement.classList.add('half-warning');
                     currentActiveTimeElement.classList.remove('warning');
                 } else {
-                    console.log(`Player: ${player.name} - Removing warning and half-warning classes`);
                     currentActiveTimeElement.classList.remove('warning');
                     currentActiveTimeElement.classList.remove('half-warning');
                 }
             });
         }
 
-        // Call updatePlayerStyles periodically or after relevant events
-        setInterval(updatePlayerStyles, 1000); // Example: update every second
+        setInterval(updatePlayerStyles, 1000);
 
         function renderPlayers() {
             const container = document.getElementById("playersContainer");
@@ -156,6 +149,12 @@
             waitTimeElement.textContent = `Wait Time: ${formatTime(player.waitTime)}`;
             activeTimeElement.textContent = `Combined Active Time: ${formatTime(player.activeTime)}`;
             currentActiveTimeElement.textContent = `Current Active Time: ${formatTime(currentActiveTime)}`;
+
+            if (player.waitTime > maxWaitTime) {
+                waitTimeElement.classList.add('warning');
+            } else {
+                waitTimeElement.classList.remove('warning');
+            }
 
             if (currentActiveTime >= maxCurrentActiveTime) {
                 currentActiveTimeElement.classList.add('warning');
@@ -231,6 +230,6 @@
             intervalId = setInterval(updateTimers, 1000);
             renderPlayers();
         });
-    </script>
-</body>
+        </script>
+    </body>
 </html>
