@@ -18,6 +18,9 @@
         .player.active {
             background-color: #e0ffe0;
         }
+        .player.warning {
+            background-color: #ffffe0; /* Light yellow */
+        }
         .player h3 {
             margin: 0;
         }
@@ -33,6 +36,9 @@
         }
         .warning {
             color: red;
+        }
+        .half-warning {
+            background-color: #ffffe0; /* Light yellow */
         }
     </style>
 </head>
@@ -55,7 +61,8 @@
         let activePlayer = null;
         let isPaused = false;
         let intervalId;
-        const maxCurrentActiveTime = 180000;
+        // const maxCurrentActiveTime = 180000;
+        const maxCurrentActiveTime = 8000;
         const maxWaitTime = maxCurrentActiveTime * players.length;
 
         function selectPlayer(index) {
@@ -66,9 +73,37 @@
                 players[activePlayer].startTime = null;
             }
             activePlayer = index;
-            players[activePlayer].waitTime = 0;
             players[activePlayer].startTime = now;
+            players[activePlayer].waitTime = 0; // Reset wait time
+            updatePlayerStyles();
         }
+
+        function updatePlayerStyles() {
+            players.forEach((player, index) => {
+                const playerElement = document.getElementById(`player-${index}`);
+                const currentActiveTime = activePlayer === index && player.startTime ? Date.now() - player.startTime : player.currentActiveTime;
+                const currentActiveTimeElement = playerElement.querySelector('.timer:nth-child(3)');
+                
+                console.log(`Player: ${player.name}, Current Active Time: ${currentActiveTime}`);
+                
+                if (currentActiveTime >= maxCurrentActiveTime) {
+                    console.log(`Player: ${player.name} - Adding warning class`);
+                    currentActiveTimeElement.classList.add('warning');
+                    currentActiveTimeElement.classList.remove('half-warning');
+                } else if (currentActiveTime >= maxCurrentActiveTime / 2) {
+                    console.log(`Player: ${player.name} - Adding half-warning class`);
+                    currentActiveTimeElement.classList.add('half-warning');
+                    currentActiveTimeElement.classList.remove('warning');
+                } else {
+                    console.log(`Player: ${player.name} - Removing warning and half-warning classes`);
+                    currentActiveTimeElement.classList.remove('warning');
+                    currentActiveTimeElement.classList.remove('half-warning');
+                }
+            });
+        }
+
+        // Call updatePlayerStyles periodically or after relevant events
+        setInterval(updatePlayerStyles, 1000); // Example: update every second
 
         function renderPlayers() {
             const container = document.getElementById("playersContainer");
@@ -76,12 +111,14 @@
             players.forEach((player, index) => {
                 const playerDiv = document.createElement("div");
                 playerDiv.className = `player ${activePlayer === index ? 'active' : ''}`;
+                playerDiv.id = `player-${index}`;
+                const currentActiveTime = activePlayer === index && player.startTime ? Date.now() - player.startTime : player.currentActiveTime;
                 playerDiv.innerHTML = `
                     <h3>${player.name}</h3>
                     <div class="timers">
                         <div class="timer ${player.waitTime > maxWaitTime ? 'warning' : ''}">Wait Time: ${formatTime(player.waitTime)}</div>
                         <div class="timer">Combined Active Time: ${formatTime(player.activeTime)}</div>
-                        <div class="timer ${activePlayer === index && (Date.now() - player.startTime) > maxCurrentActiveTime ? 'warning' : ''}">Current Active Time: ${formatTime(activePlayer === index ? Date.now() - player.startTime : player.currentActiveTime)}</div>
+                        <div class="timer ${activePlayer === index && currentActiveTime > maxCurrentActiveTime ? 'warning' : ''}">Current Active Time: ${formatTime(currentActiveTime)}</div>
                     </div>
                     <button onclick="selectPlayer(${index})">Select</button>
                 `;
@@ -91,9 +128,10 @@
 
         function formatTime(ms) {
             const totalSeconds = Math.floor(ms / 1000);
-            const minutes = Math.floor(totalSeconds / 60);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
-            return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+            return `${hours}:${minutes < 10 ? "0" : ""}${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
         }
 
         function updateTimers() {
@@ -103,8 +141,32 @@
                 } else {
                     player.currentActiveTime = Date.now() - player.startTime;
                 }
+                updatePlayerTimers(index);
             });
-            renderPlayers();
+        }
+
+        function updatePlayerTimers(index) {
+            const player = players[index];
+            const playerElement = document.getElementById(`player-${index}`);
+            const currentActiveTime = activePlayer === index && player.startTime ? Date.now() - player.startTime : player.currentActiveTime;
+            const waitTimeElement = playerElement.querySelector('.timer:nth-child(1)');
+            const activeTimeElement = playerElement.querySelector('.timer:nth-child(2)');
+            const currentActiveTimeElement = playerElement.querySelector('.timer:nth-child(3)');
+
+            waitTimeElement.textContent = `Wait Time: ${formatTime(player.waitTime)}`;
+            activeTimeElement.textContent = `Combined Active Time: ${formatTime(player.activeTime)}`;
+            currentActiveTimeElement.textContent = `Current Active Time: ${formatTime(currentActiveTime)}`;
+
+            if (currentActiveTime >= maxCurrentActiveTime) {
+                currentActiveTimeElement.classList.add('warning');
+                currentActiveTimeElement.classList.remove('half-warning');
+            } else if (currentActiveTime >= maxCurrentActiveTime / 2) {
+                currentActiveTimeElement.classList.add('half-warning');
+                currentActiveTimeElement.classList.remove('warning');
+            } else {
+                currentActiveTimeElement.classList.remove('warning');
+                currentActiveTimeElement.classList.remove('half-warning');
+            }
         }
 
         function togglePause() {
