@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -39,112 +38,44 @@
 </head>
 <body>
     <h1>Session Timer Manager</h1>
-    <div id="players"></div>
+    <div id="playersContainer"></div>
     <button onclick="addPlayer()">Add Player</button>
     <button onclick="resetSession()">Reset Session</button>
+
     <script>
-        const players = [];
+        let players = [
+            { name: "Player 1", waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null },
+            { name: "Player 2", waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null }
+        ];
         let activePlayer = null;
-        const TIMER_LIMIT = 180000; // 3 minutes in milliseconds
-
-        function addPlayer() {
-            const playerName = prompt("Enter player name:");
-            if (!playerName) return;
-
-            const player = {
-                name: playerName,
-                waitTime: 0,
-                activeTime: 0,
-                totalTime: 0,
-                element: null,
-                interval: null,
-            };
-
-            players.push(player);
-            renderPlayers();
-        }
 
         function selectPlayer(index) {
+            const now = Date.now();
             if (activePlayer !== null) {
-                // Stop the current active player's timer
-                clearInterval(players[activePlayer].interval);
+                players[activePlayer].activeTime += now - players[activePlayer].startTime;
+                players[activePlayer].currentActiveTime = 0;
+                players[activePlayer].startTime = null;
             }
-
             activePlayer = index;
-            const player = players[index];
-
-            // Reset wait time and start active timer
-            player.waitTime = 0;
-            player.interval = setInterval(() => {
-                player.activeTime += 1000;
-                player.totalTime += 1000;
-
-                if (player.activeTime >= TIMER_LIMIT) {
-                    player.element.querySelector(".active-time").classList.add("warning");
-                } else {
-                    player.element.querySelector(".active-time").classList.remove("warning");
-                }
-
-                renderPlayers();
-            }, 1000);
-
-            renderPlayers();
-        }
-
-        function resetSession() {
-            players.forEach(player => {
-                clearInterval(player.interval);
-                player.waitTime = 0;
-                player.activeTime = 0;
-                player.totalTime = 0;
-            });
-            activePlayer = null;
-            renderPlayers();
+            players[activePlayer].waitTime = 0;
+            players[activePlayer].startTime = now;
         }
 
         function renderPlayers() {
-            const container = document.getElementById("players");
+            const container = document.getElementById("playersContainer");
             container.innerHTML = "";
-
             players.forEach((player, index) => {
                 const playerDiv = document.createElement("div");
-                playerDiv.className = `player ${activePlayer === index ? "active" : ""}`;
-
-                const title = document.createElement("h3");
-                title.textContent = player.name;
-                playerDiv.appendChild(title);
-
-                const timersDiv = document.createElement("div");
-                timersDiv.className = "timers";
-
-                const waitTimeDiv = document.createElement("div");
-                waitTimeDiv.className = "timer";
-                waitTimeDiv.textContent = `Wait Time: ${formatTime(player.waitTime)}`;
-
-                const activeTimeDiv = document.createElement("div");
-                activeTimeDiv.className = "timer active-time";
-                activeTimeDiv.textContent = `Active Time: ${formatTime(player.activeTime)}`;
-
-                const totalTimeDiv = document.createElement("div");
-                totalTimeDiv.className = "timer";
-                totalTimeDiv.textContent = `Total Time: ${formatTime(player.totalTime)}`;
-
-                timersDiv.appendChild(waitTimeDiv);
-                timersDiv.appendChild(activeTimeDiv);
-                timersDiv.appendChild(totalTimeDiv);
-
-                playerDiv.appendChild(timersDiv);
-
-                const selectButton = document.createElement("button");
-                selectButton.textContent = activePlayer === index ? "Deselect" : "Select";
-                selectButton.onclick = () => selectPlayer(activePlayer === index ? null : index);
-                playerDiv.appendChild(selectButton);
-
-                if (activePlayer !== index) {
-                    player.waitTime += 1000;
-                }
-
-                player.element = playerDiv;
+                playerDiv.className = `player ${activePlayer === index ? 'active' : ''}`;
+                playerDiv.innerHTML = `
+                    <h3>${player.name}</h3>
+                    <div class="timers">
+                        <div class="timer">Wait Time: ${formatTime(player.waitTime)}</div>
+                        <div class="timer">Combined Active Time: ${formatTime(player.activeTime)}</div>
+                        <div class="timer">Current Active Time: ${formatTime(activePlayer === index ? Date.now() - player.startTime : player.currentActiveTime)}</div>
+                    </div>
+                    <button onclick="selectPlayer(${index})">Select</button>
+                `;
                 container.appendChild(playerDiv);
             });
         }
@@ -160,10 +91,35 @@
             players.forEach((player, index) => {
                 if (activePlayer !== index) {
                     player.waitTime += 1000;
+                } else {
+                    player.currentActiveTime = Date.now() - player.startTime;
                 }
             });
             renderPlayers();
         }, 1000);
+
+        function addPlayer() {
+            const playerName = prompt("Enter player name:");
+            if (playerName) {
+                players.push({ name: playerName, waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null });
+                renderPlayers();
+            }
+        }
+
+        function resetSession() {
+            players.forEach(player => {
+                player.waitTime = 0;
+                player.activeTime = 0;
+                player.currentActiveTime = 0;
+                player.startTime = null;
+            });
+            activePlayer = null;
+            renderPlayers();
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            renderPlayers();
+        });
     </script>
 </body>
 </html>
