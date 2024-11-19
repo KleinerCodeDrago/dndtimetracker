@@ -1,0 +1,169 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Timer Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .player {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .player.active {
+            background-color: #e0ffe0;
+        }
+        .player h3 {
+            margin: 0;
+        }
+        .timers {
+            display: flex;
+            justify-content: space-between;
+        }
+        button {
+            margin-top: 10px;
+        }
+        .timer {
+            width: 30%;
+        }
+        .warning {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Session Timer Manager</h1>
+    <div id="players"></div>
+    <button onclick="addPlayer()">Add Player</button>
+    <button onclick="resetSession()">Reset Session</button>
+    <script>
+        const players = [];
+        let activePlayer = null;
+        const TIMER_LIMIT = 180000; // 3 minutes in milliseconds
+
+        function addPlayer() {
+            const playerName = prompt("Enter player name:");
+            if (!playerName) return;
+
+            const player = {
+                name: playerName,
+                waitTime: 0,
+                activeTime: 0,
+                totalTime: 0,
+                element: null,
+                interval: null,
+            };
+
+            players.push(player);
+            renderPlayers();
+        }
+
+        function selectPlayer(index) {
+            if (activePlayer !== null) {
+                // Stop the current active player's timer
+                clearInterval(players[activePlayer].interval);
+            }
+
+            activePlayer = index;
+            const player = players[index];
+
+            // Reset wait time and start active timer
+            player.waitTime = 0;
+            player.interval = setInterval(() => {
+                player.activeTime += 1000;
+                player.totalTime += 1000;
+
+                if (player.activeTime >= TIMER_LIMIT) {
+                    player.element.querySelector(".active-time").classList.add("warning");
+                } else {
+                    player.element.querySelector(".active-time").classList.remove("warning");
+                }
+
+                renderPlayers();
+            }, 1000);
+
+            renderPlayers();
+        }
+
+        function resetSession() {
+            players.forEach(player => {
+                clearInterval(player.interval);
+                player.waitTime = 0;
+                player.activeTime = 0;
+                player.totalTime = 0;
+            });
+            activePlayer = null;
+            renderPlayers();
+        }
+
+        function renderPlayers() {
+            const container = document.getElementById("players");
+            container.innerHTML = "";
+
+            players.forEach((player, index) => {
+                const playerDiv = document.createElement("div");
+                playerDiv.className = `player ${activePlayer === index ? "active" : ""}`;
+
+                const title = document.createElement("h3");
+                title.textContent = player.name;
+                playerDiv.appendChild(title);
+
+                const timersDiv = document.createElement("div");
+                timersDiv.className = "timers";
+
+                const waitTimeDiv = document.createElement("div");
+                waitTimeDiv.className = "timer";
+                waitTimeDiv.textContent = `Wait Time: ${formatTime(player.waitTime)}`;
+
+                const activeTimeDiv = document.createElement("div");
+                activeTimeDiv.className = "timer active-time";
+                activeTimeDiv.textContent = `Active Time: ${formatTime(player.activeTime)}`;
+
+                const totalTimeDiv = document.createElement("div");
+                totalTimeDiv.className = "timer";
+                totalTimeDiv.textContent = `Total Time: ${formatTime(player.totalTime)}`;
+
+                timersDiv.appendChild(waitTimeDiv);
+                timersDiv.appendChild(activeTimeDiv);
+                timersDiv.appendChild(totalTimeDiv);
+
+                playerDiv.appendChild(timersDiv);
+
+                const selectButton = document.createElement("button");
+                selectButton.textContent = activePlayer === index ? "Deselect" : "Select";
+                selectButton.onclick = () => selectPlayer(activePlayer === index ? null : index);
+                playerDiv.appendChild(selectButton);
+
+                if (activePlayer !== index) {
+                    player.waitTime += 1000;
+                }
+
+                player.element = playerDiv;
+                container.appendChild(playerDiv);
+            });
+        }
+
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+        }
+
+        setInterval(() => {
+            players.forEach((player, index) => {
+                if (activePlayer !== index) {
+                    player.waitTime += 1000;
+                }
+            });
+            renderPlayers();
+        }, 1000);
+    </script>
+</body>
+</html>
