@@ -45,28 +45,39 @@
     <body>
         <h1>Session Timer Manager</h1>
         <div id="playersContainer"></div>
-        <button onclick="addPlayer()">Add Player</button>
-        <button onclick="resetSession()">Reset Session</button>
-        <button onclick="togglePause()">Pause</button>
-        <button onclick="exportPlayers()">Export Players</button>
-        <button onclick="importPlayers()">Import Players</button>
+        <button id="addPlayerButton" onclick="addPlayer()">Add Player</button>
+        <button id="resetSessionButton" onclick="resetSession()">Reset Session</button>
+        <button id="togglePauseButton" onclick="togglePause()">Pause</button>
+        <button id="exportPlayersButton" onclick="exportPlayers()">Export Players</button>
+        <button id="importPlayersButton" onclick="importPlayers()">Import Players</button>
 
+        <script src="http://localhost:3003/socket.io/socket.io.js"></script>
         <script>
-        let players = JSON.parse(localStorage.getItem('players')) || [
-            { name: "Sora", waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null },
-            { name: "Harpy", waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null },
-            { name: "Miner", waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null },
-            { name: "Meister", waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null }
-        ];
-        let activePlayer = JSON.parse(localStorage.getItem('activePlayer'));
+        const socket = io('http://localhost:3003'); // Ensure the port matches the server's port
+
+        const maxWaitTime = 60000; // Example: 1 minute in milliseconds
+        const maxCurrentActiveTime = 300000; // Example: 5 minutes in milliseconds
+
+        let players = [];
+        let activePlayer = null;
         let isPaused = false;
-        let intervalId;
-        const maxCurrentActiveTime = 2000;
-        const maxWaitTime = maxCurrentActiveTime * players.length;
+
+        socket.on('initialData', (data) => {
+            players = data.players;
+            activePlayer = data.activePlayer;
+            isPaused = data.isPaused;
+            renderPlayers();
+        });
+
+        socket.on('updateData', (data) => {
+            players = data.players;
+            activePlayer = data.activePlayer;
+            isPaused = data.isPaused;
+            renderPlayers();
+        });
 
         function saveData() {
-            localStorage.setItem('players', JSON.stringify(players));
-            localStorage.setItem('activePlayer', JSON.stringify(activePlayer));
+            socket.emit('updateData', { players, activePlayer, isPaused });
         }
 
         function selectPlayer(index) {
@@ -86,9 +97,12 @@
         function updatePlayerStyles() {
             players.forEach((player, index) => {
                 const playerElement = document.getElementById(`player-${index}`);
+                if (!playerElement) return; // Ensure the element exists
+
                 const currentActiveTime = activePlayer === index && player.startTime ? Date.now() - player.startTime : player.currentActiveTime;
                 const currentActiveTimeElement = playerElement.querySelector('.timer:nth-child(3)');
-                
+                if (!currentActiveTimeElement) return; // Ensure the element exists
+
                 if (currentActiveTime >= maxCurrentActiveTime) {
                     currentActiveTimeElement.classList.add('warning');
                     currentActiveTimeElement.classList.remove('half-warning');
@@ -148,10 +162,14 @@
         function updatePlayerTimers(index) {
             const player = players[index];
             const playerElement = document.getElementById(`player-${index}`);
+            if (!playerElement) return; // Ensure the element exists
+
             const currentActiveTime = activePlayer === index && player.startTime ? Date.now() - player.startTime : player.currentActiveTime;
             const waitTimeElement = playerElement.querySelector('.timer:nth-child(1)');
             const activeTimeElement = playerElement.querySelector('.timer:nth-child(2)');
             const currentActiveTimeElement = playerElement.querySelector('.timer:nth-child(3)');
+
+            if (!waitTimeElement || !activeTimeElement || !currentActiveTimeElement) return; // Ensure the elements exist
 
             waitTimeElement.textContent = `Wait Time: ${formatTime(player.waitTime)}`;
             activeTimeElement.textContent = `Combined Active Time: ${formatTime(player.activeTime)}`;
@@ -242,9 +260,21 @@
         }
 
         document.addEventListener("DOMContentLoaded", () => {
-            intervalId = setInterval(updateTimers, 1000);
+            setInterval(updateTimers, 1000);
             renderPlayers();
         });
+        </script>
+        <script>
+            const password = prompt("Enter password:");
+            const isAdmin = password === "node server.js";
+
+            if (password === null || !isAdmin) {
+                document.getElementById("addPlayerButton").style.display = "none";
+                document.getElementById("resetSessionButton").style.display = "none";
+                document.getElementById("togglePauseButton").style.display = "none";
+                document.getElementById("exportPlayersButton").style.display = "none";
+                document.getElementById("importPlayersButton").style.display = "none";
+            }
         </script>
     </body>
 </html>
