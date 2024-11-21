@@ -100,18 +100,18 @@
                     players[index].activeTime += now - players[index].startTime;
                     players[index].currentActiveTime = 0;
                     players[index].startTime = null;
-                    activePlayer = null; // Deselect the active player
+                    activePlayer = null;
                 } else {
                     if (activePlayer !== null) {
-                        // Deselect the currently active player
                         players[activePlayer].activeTime += now - players[activePlayer].startTime;
                         players[activePlayer].currentActiveTime = 0;
                         players[activePlayer].startTime = null;
                     }
                     players[index].startTime = now;
-                    players[index].waitTime = 0; // Reset wait time
-                    activePlayer = index; // Set the new active player
+                    players[index].waitTime = 0;
+                    activePlayer = index;
                 }
+                renderPlayers();
                 saveData();
             }
 
@@ -185,8 +185,8 @@
 
             function togglePause() {
                 isPaused = !isPaused;
-                saveData();
                 updatePauseButton();
+                saveData();
             }
 
             function addPlayer() {
@@ -205,6 +205,7 @@
                     player.startTime = null;
                 });
                 activePlayer = null;
+                renderPlayers();
                 saveData();
             }
 

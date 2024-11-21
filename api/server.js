@@ -54,7 +54,7 @@ app.get('/api/updates', (req, res) => {
 });
 
 function updateTimers() {
-    if (isPaused) return; // Do not update timers if paused
+    if (isPaused) return;
 
     const now = Date.now();
     players.forEach(player => {
@@ -68,7 +68,7 @@ function updateTimers() {
 }
 
 function broadcastUpdate() {
-    // This function will be used to broadcast updates to all connected clients
+    // Implement broadcasting logic to update clients
 }
 
 setInterval(updateTimers, 1000);
