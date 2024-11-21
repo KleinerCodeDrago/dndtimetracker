@@ -58,6 +58,7 @@
             let players = [];
             let activePlayer = null;
             let isPaused = false;
+            let intervalId;
 
             function fetchData() {
                 fetch('/api/getData')
@@ -215,6 +216,7 @@
                     clearInterval(intervalId);
                     isPaused = true;
                 }
+                saveData();
             }
 
             function addPlayer() {
@@ -270,7 +272,7 @@
 
             document.addEventListener("DOMContentLoaded", () => {
                 fetchData(); // Fetch data immediately on page load
-                setInterval(updateTimers, 1000);
+                intervalId = setInterval(updateTimers, 1000);
                 setInterval(fetchData, 5000); // Poll the server every 5 seconds
             });
         </script>
