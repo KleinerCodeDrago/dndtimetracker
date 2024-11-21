@@ -1,6 +1,6 @@
 const express = require('express');
-const http = require('http');
 const socketIo = require('socket.io');
+const http = require('http');
 const path = require('path');
 
 const app = express();
@@ -20,7 +20,7 @@ app.use(express.static('public'));
 
 // Serve the HTML file for the root URL
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'Session_Timer_Manager.html'));
+    res.sendFile(path.join(__dirname, '../public/Session_Timer_Manager.html'));
 });
 
 io.on('connection', (socket) => {
@@ -34,7 +34,6 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(3003, () => {
-    console.log('Server is running on port 3003');
-    console.log('Visit http://localhost:3003 to check the server');
-});
+module.exports = (req, res) => {
+    server.emit('request', req, res);
+};
