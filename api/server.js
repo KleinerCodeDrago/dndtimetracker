@@ -16,7 +16,7 @@ let players = [
 let activePlayer = null;
 let isPaused = false;
 
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Serve the HTML file for the root URL
 app.get('/', (req, res) => {
