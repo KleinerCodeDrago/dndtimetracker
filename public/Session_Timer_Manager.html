@@ -90,7 +90,9 @@
                     players[index].startTime = now;
                     players[index].waitTime = 0; // Reset wait time
                 }
+                activePlayer = index; // Set the active player
                 saveData();
+                renderPlayers();
                 updatePlayerStyles();
             }
 
@@ -263,7 +265,6 @@
                 fetchData(); // Fetch data immediately on page load
                 setInterval(updateTimers, 1000);
                 setInterval(fetchData, 5000); // Poll the server every 5 seconds
-                renderPlayers();
             });
         </script>
         <script>
