@@ -158,6 +158,8 @@
             }
 
             function updateTimers() {
+                if (isPaused) return; // Do not update timers if paused
+
                 players.forEach((player, index) => {
                     if (!player.startTime) {
                         player.waitTime += 1000;
