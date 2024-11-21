@@ -114,8 +114,6 @@
                     activePlayer = index; // Set the new active player
                 }
                 saveData();
-                renderPlayers();
-                updatePlayerStyles();
             }
 
             function updatePlayerStyles() {
@@ -197,7 +195,6 @@
                 if (playerName) {
                     players.push({ name: playerName, waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null });
                     saveData();
-                    renderPlayers();
                 }
             }
 
@@ -210,7 +207,6 @@
                 });
                 activePlayer = null;
                 saveData();
-                renderPlayers();
             }
 
             function exportPlayers() {
@@ -236,7 +232,6 @@
                         players = JSON.parse(e.target.result);
                         activePlayer = null;
                         saveData();
-                        renderPlayers();
                     };
                     reader.readAsText(file);
                 };
