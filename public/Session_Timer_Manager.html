@@ -51,6 +51,7 @@
         <button id="exportPlayersButton" onclick="exportPlayers()">Export Players</button>
         <button id="importPlayersButton" onclick="importPlayers()">Import Players</button>
 
+        <script src="/socket.io/socket.io.js"></script>
         <script>
             const maxWaitTime = 60000; // Example: 1 minute in milliseconds
             const maxCurrentActiveTime = 300000; // Example: 5 minutes in milliseconds
@@ -58,7 +59,18 @@
             let players = [];
             let activePlayer = null;
             let isPaused = false;
-            let intervalId;
+
+            const eventSource = new EventSource('/api/updates');
+
+            eventSource.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                players = data.players;
+                activePlayer = data.activePlayer;
+                isPaused = data.isPaused;
+                renderPlayers();
+                updatePlayerStyles();
+                updatePauseButton();
+            };
 
             function fetchData() {
                 fetch('/api/getData')
@@ -68,6 +80,8 @@
                         activePlayer = data.activePlayer;
                         isPaused = data.isPaused;
                         renderPlayers();
+                        updatePlayerStyles();
+                        updatePauseButton();
                     });
             }
 
@@ -123,10 +137,25 @@
                         currentActiveTimeElement.classList.remove('warning');
                         currentActiveTimeElement.classList.remove('half-warning');
                     }
+
+                    const waitTimeElement = playerElement.querySelector('.timer:nth-child(1)');
+                    if (player.waitTime > maxWaitTime) {
+                        waitTimeElement.classList.add('warning');
+                        waitTimeElement.classList.remove('half-warning');
+                    } else if (player.waitTime >= maxWaitTime / 2) {
+                        waitTimeElement.classList.add('half-warning');
+                        waitTimeElement.classList.remove('warning');
+                    } else {
+                        waitTimeElement.classList.remove('warning');
+                        waitTimeElement.classList.remove('half-warning');
+                    }
                 });
             }
 
-            setInterval(updatePlayerStyles, 1000);
+            function updatePauseButton() {
+                const togglePauseButton = document.getElementById("togglePauseButton");
+                togglePauseButton.textContent = isPaused ? "Play" : "Pause";
+            }
 
             function renderPlayers() {
                 const container = document.getElementById("playersContainer");
@@ -157,68 +186,10 @@
                 return `${hours}:${minutes < 10 ? "0" : ""}${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
             }
 
-            function updateTimers() {
-                if (isPaused) return; // Do not update timers if paused
-
-                players.forEach((player, index) => {
-                    if (!player.startTime) {
-                        player.waitTime += 1000;
-                    } else {
-                        player.currentActiveTime = Date.now() - player.startTime;
-                    }
-                    updatePlayerTimers(index);
-                });
-                saveData();
-            }
-
-            function updatePlayerTimers(index) {
-                const player = players[index];
-                const playerElement = document.getElementById(`player-${index}`);
-                if (!playerElement) return; // Ensure the element exists
-
-                const currentActiveTime = player.startTime ? Date.now() - player.startTime : player.currentActiveTime;
-                const waitTimeElement = playerElement.querySelector('.timer:nth-child(1)');
-                const activeTimeElement = playerElement.querySelector('.timer:nth-child(2)');
-                const currentActiveTimeElement = playerElement.querySelector('.timer:nth-child(3)');
-
-                if (!waitTimeElement || !activeTimeElement || !currentActiveTimeElement) return; // Ensure the elements exist
-
-                waitTimeElement.textContent = `Wait Time: ${formatTime(player.waitTime)}`;
-                activeTimeElement.textContent = `Combined Active Time: ${formatTime(player.activeTime)}`;
-                currentActiveTimeElement.textContent = `Current Active Time: ${formatTime(currentActiveTime)}`;
-
-                if (player.waitTime > maxWaitTime) {
-                    waitTimeElement.classList.add('warning');
-                    waitTimeElement.classList.remove('half-warning');
-                } else if (player.waitTime >= maxWaitTime / 2) {
-                    waitTimeElement.classList.add('half-warning');
-                    waitTimeElement.classList.remove('warning');
-                } else {
-                    waitTimeElement.classList.remove('warning');
-                    waitTimeElement.classList.remove('half-warning');
-                }
-
-                if (currentActiveTime >= maxCurrentActiveTime) {
-                    currentActiveTimeElement.classList.add('warning');
-                    currentActiveTimeElement.classList.remove('half-warning');
-                } else if (currentActiveTime >= maxCurrentActiveTime / 2) {
-                    currentActiveTimeElement.classList.add('half-warning');
-                    currentActiveTimeElement.classList.remove('warning');
-                } else {
-                    currentActiveTimeElement.classList.remove('warning');
-                    currentActiveTimeElement.classList.remove('half-warning');
-                }
-            }
-
             function togglePause() {
-                if (isPaused) {
-                    intervalId = setInterval(updateTimers, 1000);
-                    isPaused = false;
-                } else {
-                    clearInterval(intervalId);
-                    isPaused = true;
-                }
+                isPaused = !isPaused;
                 saveData();
+                updatePauseButton();
             }
 
             function addPlayer() {
@@ -274,8 +245,6 @@
 
             document.addEventListener("DOMContentLoaded", () => {
                 fetchData(); // Fetch data immediately on page load
-                intervalId = setInterval(updateTimers, 1000);
-                setInterval(fetchData, 1000); // Poll the server every second
             });
         </script>
         <script>
