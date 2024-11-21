@@ -1,0 +1,12 @@
+{
+  "name": "dndtimetracker",
+  "version": "1.0.0",
+  "main": "api/server.js",
+  "dependencies": {
+    "express": "^4.17.1",
+    "socket.io": "^4.0.0"
+  },
+  "scripts": {
+    "start": "node api/server.js"
+  }
+}
