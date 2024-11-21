@@ -33,9 +33,10 @@ io.on('connection', (socket) => {
     });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// Remove the server.listen call
+// const PORT = process.env.PORT || 3000;
+// server.listen(PORT, () => {
+//   console.log(`Server is running on port ${PORT}`);
+// });
 
-module.exports = server;
+module.exports = app;
