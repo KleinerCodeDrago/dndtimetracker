@@ -35,5 +35,10 @@ io.on('connection', (socket) => {
 });
 
 module.exports = (req, res) => {
-    server.emit('request', req, res);
+    try {
+        server.emit('request', req, res);
+    } catch (error) {
+        console.error('Serverless function error:', error);
+        res.status(500).send('Internal Server Error');
+    }
 };
