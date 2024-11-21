@@ -38,7 +38,4 @@ server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
-module.exports = (req, res) => {
-    const handle = app.getRequestHandler();
-    return handle(req, res);
-};
+module.exports = server;
