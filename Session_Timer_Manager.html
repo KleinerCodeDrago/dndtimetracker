@@ -82,14 +82,14 @@
 
         function selectPlayer(index) {
             const now = Date.now();
-            if (activePlayer !== null) {
-                players[activePlayer].activeTime += now - players[activePlayer].startTime;
-                players[activePlayer].currentActiveTime = 0;
-                players[activePlayer].startTime = null;
+            if (players[index].startTime) {
+                players[index].activeTime += now - players[index].startTime;
+                players[index].currentActiveTime = 0;
+                players[index].startTime = null;
+            } else {
+                players[index].startTime = now;
+                players[index].waitTime = 0; // Reset wait time
             }
-            activePlayer = index;
-            players[activePlayer].startTime = now;
-            players[activePlayer].waitTime = 0; // Reset wait time
             saveData();
             updatePlayerStyles();
         }
@@ -99,7 +99,7 @@
                 const playerElement = document.getElementById(`player-${index}`);
                 if (!playerElement) return; // Ensure the element exists
 
-                const currentActiveTime = activePlayer === index && player.startTime ? Date.now() - player.startTime : player.currentActiveTime;
+                const currentActiveTime = player.startTime ? Date.now() - player.startTime : player.currentActiveTime;
                 const currentActiveTimeElement = playerElement.querySelector('.timer:nth-child(3)');
                 if (!currentActiveTimeElement) return; // Ensure the element exists
 
@@ -123,17 +123,17 @@
             container.innerHTML = "";
             players.forEach((player, index) => {
                 const playerDiv = document.createElement("div");
-                playerDiv.className = `player ${activePlayer === index ? 'active' : ''}`;
+                playerDiv.className = `player ${player.startTime ? 'active' : ''}`;
                 playerDiv.id = `player-${index}`;
-                const currentActiveTime = activePlayer === index && player.startTime ? Date.now() - player.startTime : player.currentActiveTime;
+                const currentActiveTime = player.startTime ? Date.now() - player.startTime : player.currentActiveTime;
                 playerDiv.innerHTML = `
                     <h3>${player.name}</h3>
                     <div class="timers">
                         <div class="timer ${player.waitTime > maxWaitTime ? 'warning' : player.waitTime >= maxWaitTime / 2 ? 'half-warning' : ''}">Wait Time: ${formatTime(player.waitTime)}</div>
                         <div class="timer">Combined Active Time: ${formatTime(player.activeTime)}</div>
-                        <div class="timer ${activePlayer === index && currentActiveTime > maxCurrentActiveTime ? 'warning' : currentActiveTime >= maxCurrentActiveTime / 2 ? 'half-warning' : ''}">Current Active Time: ${formatTime(currentActiveTime)}</div>
+                        <div class="timer ${currentActiveTime > maxCurrentActiveTime ? 'warning' : currentActiveTime >= maxCurrentActiveTime / 2 ? 'half-warning' : ''}">Current Active Time: ${formatTime(currentActiveTime)}</div>
                     </div>
-                    <button onclick="selectPlayer(${index})">Select</button>
+                    <button onclick="selectPlayer(${index})">${player.startTime ? 'Deselect' : 'Select'}</button>
                 `;
                 container.appendChild(playerDiv);
             });
@@ -149,7 +149,7 @@
 
         function updateTimers() {
             players.forEach((player, index) => {
-                if (activePlayer !== index) {
+                if (!player.startTime) {
                     player.waitTime += 1000;
                 } else {
                     player.currentActiveTime = Date.now() - player.startTime;
@@ -164,7 +164,7 @@
             const playerElement = document.getElementById(`player-${index}`);
             if (!playerElement) return; // Ensure the element exists
 
-            const currentActiveTime = activePlayer === index && player.startTime ? Date.now() - player.startTime : player.currentActiveTime;
+            const currentActiveTime = player.startTime ? Date.now() - player.startTime : player.currentActiveTime;
             const waitTimeElement = playerElement.querySelector('.timer:nth-child(1)');
             const activeTimeElement = playerElement.querySelector('.timer:nth-child(2)');
             const currentActiveTimeElement = playerElement.querySelector('.timer:nth-child(3)');
