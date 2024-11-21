@@ -15,6 +15,7 @@ let players = [
 ];
 let activePlayer = null;
 let isPaused = false;
+let clients = [];
 
 app.use(express.static(path.join(__dirname, '../public')));
 
@@ -40,6 +41,17 @@ app.get('/api/updates', (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
+
+    const clientId = Date.now();
+    const newClient = {
+        id: clientId,
+        res
+    };
+    clients.push(newClient);
+
+    req.on('close', () => {
+        clients = clients.filter(client => client.id !== clientId);
+    });
 
     const sendUpdate = () => {
         res.write(`data: ${JSON.stringify({ players, activePlayer, isPaused })}\n\n`);
@@ -68,7 +80,9 @@ function updateTimers() {
 }
 
 function broadcastUpdate() {
-    // Implement broadcasting logic to update clients
+    clients.forEach(client => {
+        client.res.write(`data: ${JSON.stringify({ players, activePlayer, isPaused })}\n\n`);
+    });
 }
 
 setInterval(updateTimers, 1000);
