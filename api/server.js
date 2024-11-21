@@ -23,10 +23,12 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/getData', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
     res.json({ players, activePlayer, isPaused });
 });
 
 app.post('/api/updateData', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
     players = req.body.players;
     activePlayer = req.body.activePlayer;
     isPaused = req.body.isPaused;
