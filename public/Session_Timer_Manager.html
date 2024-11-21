@@ -51,60 +51,140 @@
         <button id="exportPlayersButton" onclick="exportPlayers()">Export Players</button>
         <button id="importPlayersButton" onclick="importPlayers()">Import Players</button>
 
-        <script src="/socket.io/socket.io.js"></script>
-        <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
         <script>
-        const pusher = new Pusher('your-key', {
-            cluster: 'your-cluster'
-        });
+            const maxWaitTime = 60000; // Example: 1 minute in milliseconds
+            const maxCurrentActiveTime = 300000; // Example: 5 minutes in milliseconds
 
-        const channel = pusher.subscribe('dnd-channel');
-        channel.bind('updateData', (data) => {
-            players = data.players;
-            activePlayer = data.activePlayer;
-            isPaused = data.isPaused;
-            renderPlayers();
-        });
+            let players = [];
+            let activePlayer = null;
+            let isPaused = false;
 
-        const maxWaitTime = 60000; // Example: 1 minute in milliseconds
-        const maxCurrentActiveTime = 300000; // Example: 5 minutes in milliseconds
-
-        let players = [];
-        let activePlayer = null;
-        let isPaused = false;
-
-        function saveData() {
-            fetch('/updateData', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ players, activePlayer, isPaused })
-            });
-        }
-
-        function selectPlayer(index) {
-            const now = Date.now();
-            if (players[index].startTime) {
-                players[index].activeTime += now - players[index].startTime;
-                players[index].currentActiveTime = 0;
-                players[index].startTime = null;
-            } else {
-                players[index].startTime = now;
-                players[index].waitTime = 0; // Reset wait time
+            function fetchData() {
+                fetch('/getData')
+                    .then(response => response.json())
+                    .then(data => {
+                        players = data.players;
+                        activePlayer = data.activePlayer;
+                        isPaused = data.isPaused;
+                        renderPlayers();
+                    });
             }
-            saveData();
-            updatePlayerStyles();
-        }
 
-        function updatePlayerStyles() {
-            players.forEach((player, index) => {
+            function saveData() {
+                fetch('/updateData', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ players, activePlayer, isPaused })
+                });
+            }
+
+            function selectPlayer(index) {
+                const now = Date.now();
+                if (players[index].startTime) {
+                    players[index].activeTime += now - players[index].startTime;
+                    players[index].currentActiveTime = 0;
+                    players[index].startTime = null;
+                } else {
+                    players[index].startTime = now;
+                    players[index].waitTime = 0; // Reset wait time
+                }
+                saveData();
+                updatePlayerStyles();
+            }
+
+            function updatePlayerStyles() {
+                players.forEach((player, index) => {
+                    const playerElement = document.getElementById(`player-${index}`);
+                    if (!playerElement) return; // Ensure the element exists
+
+                    const currentActiveTime = player.startTime ? Date.now() - player.startTime : player.currentActiveTime;
+                    const currentActiveTimeElement = playerElement.querySelector('.timer:nth-child(3)');
+                    if (!currentActiveTimeElement) return; // Ensure the element exists
+
+                    if (currentActiveTime >= maxCurrentActiveTime) {
+                        currentActiveTimeElement.classList.add('warning');
+                        currentActiveTimeElement.classList.remove('half-warning');
+                    } else if (currentActiveTime >= maxCurrentActiveTime / 2) {
+                        currentActiveTimeElement.classList.add('half-warning');
+                        currentActiveTimeElement.classList.remove('warning');
+                    } else {
+                        currentActiveTimeElement.classList.remove('warning');
+                        currentActiveTimeElement.classList.remove('half-warning');
+                    }
+                });
+            }
+
+            setInterval(updatePlayerStyles, 1000);
+
+            function renderPlayers() {
+                const container = document.getElementById("playersContainer");
+                container.innerHTML = "";
+                players.forEach((player, index) => {
+                    const playerDiv = document.createElement("div");
+                    playerDiv.className = `player ${player.startTime ? 'active' : ''}`;
+                    playerDiv.id = `player-${index}`;
+                    const currentActiveTime = player.startTime ? Date.now() - player.startTime : player.currentActiveTime;
+                    playerDiv.innerHTML = `
+                        <h3>${player.name}</h3>
+                        <div class="timers">
+                            <div class="timer ${player.waitTime > maxWaitTime ? 'warning' : player.waitTime >= maxWaitTime / 2 ? 'half-warning' : ''}">Wait Time: ${formatTime(player.waitTime)}</div>
+                            <div class="timer">Combined Active Time: ${formatTime(player.activeTime)}</div>
+                            <div class="timer ${currentActiveTime > maxCurrentActiveTime ? 'warning' : currentActiveTime >= maxCurrentActiveTime / 2 ? 'half-warning' : ''}">Current Active Time: ${formatTime(currentActiveTime)}</div>
+                        </div>
+                        <button onclick="selectPlayer(${index})">${player.startTime ? 'Deselect' : 'Select'}</button>
+                    `;
+                    container.appendChild(playerDiv);
+                });
+            }
+
+            function formatTime(ms) {
+                const totalSeconds = Math.floor(ms / 1000);
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                return `${hours}:${minutes < 10 ? "0" : ""}${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+            }
+
+            function updateTimers() {
+                players.forEach((player, index) => {
+                    if (!player.startTime) {
+                        player.waitTime += 1000;
+                    } else {
+                        player.currentActiveTime = Date.now() - player.startTime;
+                    }
+                    updatePlayerTimers(index);
+                });
+                saveData();
+            }
+
+            function updatePlayerTimers(index) {
+                const player = players[index];
                 const playerElement = document.getElementById(`player-${index}`);
                 if (!playerElement) return; // Ensure the element exists
 
                 const currentActiveTime = player.startTime ? Date.now() - player.startTime : player.currentActiveTime;
+                const waitTimeElement = playerElement.querySelector('.timer:nth-child(1)');
+                const activeTimeElement = playerElement.querySelector('.timer:nth-child(2)');
                 const currentActiveTimeElement = playerElement.querySelector('.timer:nth-child(3)');
-                if (!currentActiveTimeElement) return; // Ensure the element exists
+
+                if (!waitTimeElement || !activeTimeElement || !currentActiveTimeElement) return; // Ensure the elements exist
+
+                waitTimeElement.textContent = `Wait Time: ${formatTime(player.waitTime)}`;
+                activeTimeElement.textContent = `Combined Active Time: ${formatTime(player.activeTime)}`;
+                currentActiveTimeElement.textContent = `Current Active Time: ${formatTime(currentActiveTime)}`;
+
+                if (player.waitTime > maxWaitTime) {
+                    waitTimeElement.classList.add('warning');
+                    waitTimeElement.classList.remove('half-warning');
+                } else if (player.waitTime >= maxWaitTime / 2) {
+                    waitTimeElement.classList.add('half-warning');
+                    waitTimeElement.classList.remove('warning');
+                } else {
+                    waitTimeElement.classList.remove('warning');
+                    waitTimeElement.classList.remove('half-warning');
+                }
 
                 if (currentActiveTime >= maxCurrentActiveTime) {
                     currentActiveTimeElement.classList.add('warning');
@@ -116,156 +196,74 @@
                     currentActiveTimeElement.classList.remove('warning');
                     currentActiveTimeElement.classList.remove('half-warning');
                 }
-            });
-        }
+            }
 
-        setInterval(updatePlayerStyles, 1000);
-
-        function renderPlayers() {
-            const container = document.getElementById("playersContainer");
-            container.innerHTML = "";
-            players.forEach((player, index) => {
-                const playerDiv = document.createElement("div");
-                playerDiv.className = `player ${player.startTime ? 'active' : ''}`;
-                playerDiv.id = `player-${index}`;
-                const currentActiveTime = player.startTime ? Date.now() - player.startTime : player.currentActiveTime;
-                playerDiv.innerHTML = `
-                    <h3>${player.name}</h3>
-                    <div class="timers">
-                        <div class="timer ${player.waitTime > maxWaitTime ? 'warning' : player.waitTime >= maxWaitTime / 2 ? 'half-warning' : ''}">Wait Time: ${formatTime(player.waitTime)}</div>
-                        <div class="timer">Combined Active Time: ${formatTime(player.activeTime)}</div>
-                        <div class="timer ${currentActiveTime > maxCurrentActiveTime ? 'warning' : currentActiveTime >= maxCurrentActiveTime / 2 ? 'half-warning' : ''}">Current Active Time: ${formatTime(currentActiveTime)}</div>
-                    </div>
-                    <button onclick="selectPlayer(${index})">${player.startTime ? 'Deselect' : 'Select'}</button>
-                `;
-                container.appendChild(playerDiv);
-            });
-        }
-
-        function formatTime(ms) {
-            const totalSeconds = Math.floor(ms / 1000);
-            const hours = Math.floor(totalSeconds / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
-            return `${hours}:${minutes < 10 ? "0" : ""}${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-        }
-
-        function updateTimers() {
-            players.forEach((player, index) => {
-                if (!player.startTime) {
-                    player.waitTime += 1000;
+            function togglePause() {
+                if (isPaused) {
+                    intervalId = setInterval(updateTimers, 1000);
+                    isPaused = false;
                 } else {
-                    player.currentActiveTime = Date.now() - player.startTime;
+                    clearInterval(intervalId);
+                    isPaused = true;
                 }
-                updatePlayerTimers(index);
-            });
-            saveData();
-        }
-
-        function updatePlayerTimers(index) {
-            const player = players[index];
-            const playerElement = document.getElementById(`player-${index}`);
-            if (!playerElement) return; // Ensure the element exists
-
-            const currentActiveTime = player.startTime ? Date.now() - player.startTime : player.currentActiveTime;
-            const waitTimeElement = playerElement.querySelector('.timer:nth-child(1)');
-            const activeTimeElement = playerElement.querySelector('.timer:nth-child(2)');
-            const currentActiveTimeElement = playerElement.querySelector('.timer:nth-child(3)');
-
-            if (!waitTimeElement || !activeTimeElement || !currentActiveTimeElement) return; // Ensure the elements exist
-
-            waitTimeElement.textContent = `Wait Time: ${formatTime(player.waitTime)}`;
-            activeTimeElement.textContent = `Combined Active Time: ${formatTime(player.activeTime)}`;
-            currentActiveTimeElement.textContent = `Current Active Time: ${formatTime(currentActiveTime)}`;
-
-            if (player.waitTime > maxWaitTime) {
-                waitTimeElement.classList.add('warning');
-                waitTimeElement.classList.remove('half-warning');
-            } else if (player.waitTime >= maxWaitTime / 2) {
-                waitTimeElement.classList.add('half-warning');
-                waitTimeElement.classList.remove('warning');
-            } else {
-                waitTimeElement.classList.remove('warning');
-                waitTimeElement.classList.remove('half-warning');
             }
 
-            if (currentActiveTime >= maxCurrentActiveTime) {
-                currentActiveTimeElement.classList.add('warning');
-                currentActiveTimeElement.classList.remove('half-warning');
-            } else if (currentActiveTime >= maxCurrentActiveTime / 2) {
-                currentActiveTimeElement.classList.add('half-warning');
-                currentActiveTimeElement.classList.remove('warning');
-            } else {
-                currentActiveTimeElement.classList.remove('warning');
-                currentActiveTimeElement.classList.remove('half-warning');
+            function addPlayer() {
+                const playerName = prompt("Enter player name:");
+                if (playerName) {
+                    players.push({ name: playerName, waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null });
+                    saveData();
+                    renderPlayers();
+                }
             }
-        }
 
-        function togglePause() {
-            if (isPaused) {
-                intervalId = setInterval(updateTimers, 1000);
-                isPaused = false;
-            } else {
-                clearInterval(intervalId);
-                isPaused = true;
-            }
-        }
-
-        function addPlayer() {
-            const playerName = prompt("Enter player name:");
-            if (playerName) {
-                players.push({ name: playerName, waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null });
+            function resetSession() {
+                players.forEach(player => {
+                    player.waitTime = 0;
+                    player.activeTime = 0;
+                    player.currentActiveTime = 0;
+                    player.startTime = null;
+                });
+                activePlayer = null;
                 saveData();
                 renderPlayers();
             }
-        }
 
-        function resetSession() {
-            players.forEach(player => {
-                player.waitTime = 0;
-                player.activeTime = 0;
-                player.currentActiveTime = 0;
-                player.startTime = null;
-            });
-            activePlayer = null;
-            saveData();
-            renderPlayers();
-        }
+            function exportPlayers() {
+                const dataStr = JSON.stringify(players);
+                const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
 
-        function exportPlayers() {
-            const dataStr = JSON.stringify(players);
-            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+                const exportFileDefaultName = 'players.json';
 
-            const exportFileDefaultName = 'players.json';
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+            }
 
-            const linkElement = document.createElement('a');
-            linkElement.setAttribute('href', dataUri);
-            linkElement.setAttribute('download', exportFileDefaultName);
-            linkElement.click();
-        }
-
-        function importPlayers() {
-            const inputElement = document.createElement('input');
-            inputElement.type = 'file';
-            inputElement.accept = 'application/json';
-            inputElement.onchange = event => {
-                const file = event.target.files[0];
-                const reader = new FileReader();
-                reader.onload = e => {
-                    players = JSON.parse(e.target.result);
-                    activePlayer = null;
-                    saveData();
-                    renderPlayers();
+            function importPlayers() {
+                const inputElement = document.createElement('input');
+                inputElement.type = 'file';
+                inputElement.accept = 'application/json';
+                inputElement.onchange = event => {
+                    const file = event.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        players = JSON.parse(e.target.result);
+                        activePlayer = null;
+                        saveData();
+                        renderPlayers();
+                    };
+                    reader.readAsText(file);
                 };
-                reader.readAsText(file);
-            };
-            inputElement.click();
-        }
+                inputElement.click();
+            }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            setInterval(updateTimers, 1000);
-            renderPlayers();
-        });
+            document.addEventListener("DOMContentLoaded", () => {
+                setInterval(updateTimers, 1000);
+                setInterval(fetchData, 5000); // Poll the server every 5 seconds
+                renderPlayers();
+            });
         </script>
         <script>
             const password = prompt("Enter password:");
