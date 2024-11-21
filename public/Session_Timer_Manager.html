@@ -51,9 +51,9 @@
         <button id="exportPlayersButton" onclick="exportPlayers()">Export Players</button>
         <button id="importPlayersButton" onclick="importPlayers()">Import Players</button>
 
-        <script src="http://localhost:3003/socket.io/socket.io.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
         <script>
-        const socket = io('http://localhost:3003'); // Ensure the port matches the server's port
+        const socket = io(); // Automatically connects to the server that served the page
 
         const maxWaitTime = 60000; // Example: 1 minute in milliseconds
         const maxCurrentActiveTime = 300000; // Example: 5 minutes in milliseconds
