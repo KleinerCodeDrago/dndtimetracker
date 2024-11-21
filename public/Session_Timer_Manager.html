@@ -58,6 +58,8 @@
             let players = [];
             let activePlayer = null;
             let isPaused = false;
+            let isAdmin = false;
+            let timerInterval = null;
 
             const eventSource = new EventSource('/api/updates');
 
@@ -85,13 +87,15 @@
             }
 
             function saveData() {
-                fetch('/api/updateData', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ players, activePlayer, isPaused })
-                });
+                if (isAdmin) {
+                    fetch('/api/updateData', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ players, activePlayer, isPaused })
+                    });
+                }
             }
 
             function selectPlayer(index) {
@@ -238,21 +242,39 @@
                 inputElement.click();
             }
 
+            function startTimer() {
+                if (timerInterval) clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    if (!isPaused) {
+                        const now = Date.now();
+                        players.forEach(player => {
+                            if (player.startTime) {
+                                player.currentActiveTime = now - player.startTime;
+                            } else {
+                                player.waitTime += 1000;
+                            }
+                        });
+                        renderPlayers();
+                        updatePlayerStyles();
+                        saveData();
+                    }
+                }, 1000);
+            }
+
             document.addEventListener("DOMContentLoaded", () => {
                 fetchData(); // Fetch data immediately on page load
+                const password = prompt("Enter password:");
+                isAdmin = password === "node server.js";
+                if (isAdmin) {
+                    startTimer();
+                } else {
+                    document.getElementById("addPlayerButton").style.display = "none";
+                    document.getElementById("resetSessionButton").style.display = "none";
+                    document.getElementById("togglePauseButton").style.display = "none";
+                    document.getElementById("exportPlayersButton").style.display = "none";
+                    document.getElementById("importPlayersButton").style.display = "none";
+                }
             });
-        </script>
-        <script>
-            const password = prompt("Enter password:");
-            const isAdmin = password === "node server.js";
-
-            if (password === null || !isAdmin) {
-                document.getElementById("addPlayerButton").style.display = "none";
-                document.getElementById("resetSessionButton").style.display = "none";
-                document.getElementById("togglePauseButton").style.display = "none";
-                document.getElementById("exportPlayersButton").style.display = "none";
-                document.getElementById("importPlayersButton").style.display = "none";
-            }
         </script>
     </body>
 </html>

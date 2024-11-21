@@ -65,26 +65,10 @@ app.get('/api/updates', (req, res) => {
     });
 });
 
-function updateTimers() {
-    if (isPaused) return;
-
-    const now = Date.now();
-    players.forEach(player => {
-        if (player.startTime) {
-            player.currentActiveTime = now - player.startTime;
-        } else {
-            player.waitTime += 1000;
-        }
-    });
-    broadcastUpdate();
-}
-
 function broadcastUpdate() {
     clients.forEach(client => {
         client.res.write(`data: ${JSON.stringify({ players, activePlayer, isPaused })}\n\n`);
     });
 }
-
-setInterval(updateTimers, 1000);
 
 module.exports = server;
