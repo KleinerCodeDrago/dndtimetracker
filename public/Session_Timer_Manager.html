@@ -256,7 +256,9 @@
                         });
                         renderPlayers();
                         updatePlayerStyles();
-                        saveData();
+                        if (isAdmin) {
+                            saveData();
+                        }
                     }
                 }, 1000);
             }
@@ -264,7 +266,7 @@
             document.addEventListener("DOMContentLoaded", () => {
                 fetchData(); // Fetch data immediately on page load
                 const password = prompt("Enter password:");
-                isAdmin = password === "node server.js";
+                isAdmin = password === "admin_password"; // Change to a more secure password
                 if (isAdmin) {
                     startTimer();
                 } else {
@@ -273,6 +275,7 @@
                     document.getElementById("togglePauseButton").style.display = "none";
                     document.getElementById("exportPlayersButton").style.display = "none";
                     document.getElementById("importPlayersButton").style.display = "none";
+                    startTimer(); // Start the timer for non-admin users as well
                 }
             });
         </script>
