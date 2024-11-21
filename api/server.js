@@ -18,6 +18,9 @@ let isPaused = false;
 
 app.use(express.static(path.join(__dirname, '../public')));
 
+// Serve socket.io client script
+app.use('/socket.io', express.static(path.join(__dirname, '../node_modules/socket.io/client-dist')));
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/Session_Timer_Manager.html'));
 });
