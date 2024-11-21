@@ -5,7 +5,9 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketIo(server, {
+  path: '/socket.io'
+});
 
 let players = [
     { name: "Sora", waitTime: 0, activeTime: 0, currentActiveTime: 0, startTime: null },

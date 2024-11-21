@@ -53,7 +53,7 @@
 
         <script src="/socket.io/socket.io.js"></script>
         <script>
-        const socket = io(); // Automatically connects to the server that served the page
+        const socket = io({ path: '/socket.io' }); // Automatically connects to the server that served the page
 
         const maxWaitTime = 60000; // Example: 1 minute in milliseconds
         const maxCurrentActiveTime = 300000; // Example: 5 minutes in milliseconds
