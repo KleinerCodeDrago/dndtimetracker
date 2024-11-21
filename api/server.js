@@ -40,10 +40,6 @@ server.listen(PORT, () => {
 });
 
 module.exports = (req, res) => {
-    try {
-        server.emit('request', req, res);
-    } catch (error) {
-        console.error('Serverless function error:', error);
-        res.status(500).send('Internal Server Error');
-    }
+    const handle = app.getRequestHandler();
+    return handle(req, res);
 };
