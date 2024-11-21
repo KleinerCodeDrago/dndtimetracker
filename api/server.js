@@ -18,7 +18,6 @@ let isPaused = false;
 
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Serve the HTML file for the root URL
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/Session_Timer_Manager.html'));
 });
