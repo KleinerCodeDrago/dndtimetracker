@@ -260,6 +260,7 @@
             }
 
             document.addEventListener("DOMContentLoaded", () => {
+                fetchData(); // Fetch data immediately on page load
                 setInterval(updateTimers, 1000);
                 setInterval(fetchData, 5000); // Poll the server every 5 seconds
                 renderPlayers();
