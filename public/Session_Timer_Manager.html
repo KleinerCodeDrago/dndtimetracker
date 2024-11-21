@@ -60,7 +60,7 @@
             let isPaused = false;
 
             function fetchData() {
-                fetch('/getData')
+                fetch('/api/getData')
                     .then(response => response.json())
                     .then(data => {
                         players = data.players;
@@ -71,7 +71,7 @@
             }
 
             function saveData() {
-                fetch('/updateData', {
+                fetch('/api/updateData', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

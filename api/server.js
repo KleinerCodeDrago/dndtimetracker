@@ -22,11 +22,11 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/Session_Timer_Manager.html'));
 });
 
-app.get('/getData', (req, res) => {
+app.get('/api/getData', (req, res) => {
     res.json({ players, activePlayer, isPaused });
 });
 
-app.post('/updateData', (req, res) => {
+app.post('/api/updateData', (req, res) => {
     players = req.body.players;
     activePlayer = req.body.activePlayer;
     isPaused = req.body.isPaused;
