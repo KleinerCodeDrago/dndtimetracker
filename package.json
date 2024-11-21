@@ -4,7 +4,9 @@
   "main": "api/server.js",
   "dependencies": {
     "express": "^4.17.1",
-    "socket.io": "^4.0.0"
+    "socket.io": "^4.0.0",
+    "pusher": "^5.0.0",
+    "pusher-js": "^7.0.0"
   },
   "scripts": {
     "start": "node api/server.js"

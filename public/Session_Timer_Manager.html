@@ -52,8 +52,19 @@
         <button id="importPlayersButton" onclick="importPlayers()">Import Players</button>
 
         <script src="/socket.io/socket.io.js"></script>
+        <script src="https://js.pusher.com/7.0/pusher.min.js"></script>
         <script>
-        const socket = io({ path: '/socket.io' }); // Automatically connects to the server that served the page
+        const pusher = new Pusher('your-key', {
+            cluster: 'your-cluster'
+        });
+
+        const channel = pusher.subscribe('dnd-channel');
+        channel.bind('updateData', (data) => {
+            players = data.players;
+            activePlayer = data.activePlayer;
+            isPaused = data.isPaused;
+            renderPlayers();
+        });
 
         const maxWaitTime = 60000; // Example: 1 minute in milliseconds
         const maxCurrentActiveTime = 300000; // Example: 5 minutes in milliseconds
@@ -62,22 +73,14 @@
         let activePlayer = null;
         let isPaused = false;
 
-        socket.on('initialData', (data) => {
-            players = data.players;
-            activePlayer = data.activePlayer;
-            isPaused = data.isPaused;
-            renderPlayers();
-        });
-
-        socket.on('updateData', (data) => {
-            players = data.players;
-            activePlayer = data.activePlayer;
-            isPaused = data.isPaused;
-            renderPlayers();
-        });
-
         function saveData() {
-            socket.emit('updateData', { players, activePlayer, isPaused });
+            fetch('/updateData', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ players, activePlayer, isPaused })
+            });
         }
 
         function selectPlayer(index) {

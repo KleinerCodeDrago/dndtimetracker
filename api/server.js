@@ -1,12 +1,15 @@
 const express = require('express');
-const socketIo = require('socket.io');
-const http = require('http');
+const Pusher = require('pusher');
 const path = require('path');
 
 const app = express();
-const server = http.createServer(app);
-const io = socketIo(server, {
-  path: '/socket.io'
+
+const pusher = new Pusher({
+  appId: 'your-app-id',
+  key: 'your-key',
+  secret: 'your-secret',
+  cluster: 'your-cluster',
+  useTLS: true
 });
 
 let players = [
@@ -27,21 +30,12 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/Session_Timer_Manager.html'));
 });
 
-io.on('connection', (socket) => {
-    socket.emit('initialData', { players, activePlayer, isPaused });
-
-    socket.on('updateData', (data) => {
-        players = data.players;
-        activePlayer = data.activePlayer;
-        isPaused = data.isPaused;
-        io.emit('updateData', { players, activePlayer, isPaused });
-    });
+app.post('/updateData', (req, res) => {
+    players = req.body.players;
+    activePlayer = req.body.activePlayer;
+    isPaused = req.body.isPaused;
+    pusher.trigger('dnd-channel', 'updateData', { players, activePlayer, isPaused });
+    res.sendStatus(200);
 });
-
-// Remove the server.listen call
-// const PORT = process.env.PORT || 3000;
-// server.listen(PORT, () => {
-//   console.log(`Server is running on port ${PORT}`);
-// });
 
 module.exports = app;
