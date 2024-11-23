@@ -1,0 +1,45 @@
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+.player {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.player.active {
+    background-color: #e0ffe0;
+}
+
+.player.warning {
+    background-color: #ffffe0;
+}
+
+.player h3 {
+    margin: 0;
+}
+
+.timers {
+    display: flex;
+    justify-content: space-between;
+}
+
+button {
+    margin-top: 10px;
+}
+
+.timer {
+    width: 30%;
+}
+
+.warning {
+    color: red;
+}
+
+.half-warning {
+    background-color: #ffffe0;
+}
