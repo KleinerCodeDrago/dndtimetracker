@@ -1,10 +1,7 @@
 const express = require('express');
 const path = require('path');
-const http = require('http');
 
 const app = express();
-const server = http.createServer(app);
-
 app.use(express.json());
 
 let players = [
@@ -15,13 +12,8 @@ let players = [
 ];
 let activePlayer = null;
 let isPaused = false;
-let clients = [];
 
-app.use(express.static(path.join(__dirname, '../public')));
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/Session_Timer_Manager.html'));
-});
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/api/getData', (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
@@ -33,42 +25,10 @@ app.post('/api/updateData', (req, res) => {
     players = req.body.players;
     activePlayer = req.body.activePlayer;
     isPaused = req.body.isPaused;
-    broadcastUpdate();
     res.sendStatus(200);
 });
 
-app.get('/api/updates', (req, res) => {
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-
-    const clientId = Date.now();
-    const newClient = {
-        id: clientId,
-        res
-    };
-    clients.push(newClient);
-
-    req.on('close', () => {
-        clients = clients.filter(client => client.id !== clientId);
-    });
-
-    const sendUpdate = () => {
-        res.write(`data: ${JSON.stringify({ players, activePlayer, isPaused })}\n\n`);
-    };
-
-    sendUpdate();
-    const intervalId = setInterval(sendUpdate, 1000);
-
-    req.on('close', () => {
-        clearInterval(intervalId);
-    });
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
 });
-
-function broadcastUpdate() {
-    clients.forEach(client => {
-        client.res.write(`data: ${JSON.stringify({ players, activePlayer, isPaused })}\n\n`);
-    });
-}
-
-module.exports = server;
